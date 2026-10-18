@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Herbicide Plot & Backpack Calculator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+  <div class="page">
+    <header>
+      <h1>Herbicide Plot & Backpack Calculator</h1>
+      <p>Convert label rates into practical backpack and plot‑spray numbers.</p>
+    </header>
+
+    <div class="grid">
+      <!-- INPUTS -->
+      <div class="card">
+        <h2>Inputs</h2>
+
+        <div class="section-title">Plot layout</div>
+        <div class="inputs-grid">
+          <div class="field">
+            <label for="numPlots">Number of plots</label>
+            <input id="numPlots" type="number" value="224" />
+          </div>
+        </div>
+
+        <div class="section-title">Plot dimensions</div>
+        <div class="inputs-grid">
+          <div class="field">
+            <label for="plotLength">Plot length (ft)</label>
+            <input id="plotLength" type="number" value="16" />
+          </div>
+          <div class="field">
+            <label for="plotWidth">Plot width (ft)</label>
+            <input id="plotWidth" type="number" value="5" />
+          </div>
+        </div>
+
+        <div class="section-title">Herbicide input</div>
+        <div class="inputs-grid">
+          <div class="field">
+            <label id="rateLabel" for="rateInput">Herbicide rate (oz/acre)</label>
+            <input id="rateInput" type="number" value="12" />
+          </div>
+
+          <div class="field">
+            <label for="unitSelect">Units</label>
+            <select id="unitSelect">
+              <option value="oz">Ounces (oz)</option>
+              <option value="ml">Milliliters (mL)</option>
+              <option value="g">Grams (g)</option>
+              <option value="lbs">Pounds (lbs)</option>
+              <option value="qt">Quarts (qt)</option>
+              <option value="pt">Pints (pt)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="section-title">Sprayer</div>
+        <div class="inputs-grid">
+          <div class="field">
+            <label for="tankSize">Tank size (gal)</label>
+            <input id="tankSize" type="number" value="3" />
+          </div>
+          <div class="field">
+            <label for="gpa">GPA</label>
+            <input id="gpa" type="number" value="20" oninput="syncGpa()" />
+          </div>
+        </div>
+
+        <div class="section-title">Adjuvants</div>
+        <div class="inputs-grid">
+          <div class="field">
+            <label for="nisPct">NIS %</label>
+            <input id="nisPct" type="number" value="0.5" />
+          </div>
+          <div class="field">
+            <label for="msoPct">MSO %</label>
+            <input id="msoPct" type="number" value="0.5" />
+          </div>
+          <div class="field">
+            <label for="cocPct">COC %</label>
+            <input id="cocPct" type="number" value="2" />
+          </div>
+          <div class="field">
+            <label for="uanQtAcre">UAN (qt/acre)</label>
+            <input id="uanQtAcre" type="number" value="4" />
+          </div>
+        </div>
+
+        <div class="button-row">
+          <button class="primary" id="calcBtn">Calculate</button>
+          <button class="secondary" id="resetBtn">Reset</button>
+        </div>
+
+        <div id="error" class="error" style="display:none;"></div>
+      </div>
+
+      <!-- RESULTS -->
+      <div class="card">
+        <h2>Results</h2>
+
+        <div class="section-title">Area & tanks</div>
+        <div class="results-group">
+          <div class="result"><div class="result-label">Total plots</div><div class="result-value" id="totalPlots">–</div></div>
+          <div class="result"><div class="result-label">Total acres</div><div class="result-value" id="totalAreaAc">–</div></div>
+          <div class="result"><div class="result-label">Total gallons</div><div class="result-value" id="totalGallons">–</div></div>
+          <div class="result"><div class="result-label">Tanks needed</div><div class="result-value" id="tanksNeeded">–</div></div>
+        </div>
+
+        <div class="section-title">Herbicide</div>
+        <div class="results-group">
+          <div class="result"><div class="result-label">Total herbicide</div><div class="result-value" id="herbTotal">–</div></div>
+          <div class="result"><div class="result-label">Full tank</div><div class="result-value" id="herbFullTank">–</div></div>
+          <div class="result"><div class="result-label">Partial tank</div><div class="result-value" id="herbPartialTank">–</div></div>
+        </div>
+
+        <div class="section-title">Adjuvants per full tank</div>
+        <div class="results-group">
+          <div class="result"><div class="result-label">NIS</div><div class="result-value" id="nisFullMl">–</div></div>
+          <div class="result"><div class="result-label">MSO</div><div class="result-value" id="msoFullMl">–</div></div>
+          <div class="result"><div class="result-label">COC</div><div class="result-value" id="cocFullMl">–</div></div>
+          <div class="result"><div class="result-label">UAN</div><div class="result-value" id="uanFullMl">–</div></div>
+        </div>
+
+        <div class="section-title">Tank Breakdown</div>
+        <div id="tankBreakdown" class="results-group" style="grid-template-columns: 1fr;"></div>
+      </div>
+    </div>
+
+    <div class="card">
+  <h2>Calibration</h2>
+
+  <div class="section-title">Walking speed</div>
+  <div class="inputs-grid">
+    <div class="field">
+      <label for="secPer100">Seconds per 100 ft</label>
+      <input id="secPer100" type="number" value="25" />
+    </div>
+  </div>
+
+  <div class="results-group">
+    <div class="result">
+      <div class="result-label">Speed (ft/sec)</div>
+      <div class="result-value" id="speedFtSec">–</div>
+    </div>
+    <div class="result">
+      <div class="result-label">Speed (mph)</div>
+      <div class="result-value" id="speedMph">–</div>
+    </div>
+  </div>
+
+  <div class="section-title">Boom & Nozzles</div>
+<div class="inputs-grid">
+  <div class="field">
+    <label for="nozzlesCal">Number of nozzles</label>
+    <input id="nozzlesCal" type="number" value="6" />
+  </div>
+
+  <div class="field">
+    <label for="spacingSelect">Nozzle spacing</label>
+    <select id="spacingSelect">
+      <option value="10">10 inches</option>
+      <option value="15">15 inches</option>
+      <option value="20">20 inches</option>
+      <option value="custom">Custom width</option>
+    </select>
+  </div>
+
+  <div class="field">
+    <label for="boomWidthCal">Boom width (ft)</label>
+    <input id="boomWidthCal" type="number" value="10" />
+  </div>
+</div>
+
+
+  <div class="section-title">Desired GPA</div>
+  <div class="inputs-grid">
+    <div class="field">
+      <label for="gpaTarget">Target GPA</label>
+      <input id="gpaTarget" type="number" value="20" />
+    </div>
+  </div>
+
+  <div class="section-title">30‑second catch (per nozzle)</div>
+  <div class="inputs-grid">
+    <div class="field">
+      <label for="catchMl">Catch volume (mL)</label>
+      <input id="catchMl" type="number" value="300" />
+    </div>
+  </div>
+
+  <div class="button-row">
+    <button class="primary" id="calibrateBtn">Calibrate</button>
+  </div>
+
+  <div class="results-group">
+    <div class="result">
+      <div class="result-label">Expected total (all nozzles)</div>
+      <div class="result-value" id="expectedCatchTotal">–</div>
+    </div>
+    <div class="result">
+      <div class="result-label">Expected per nozzle</div>
+      <div class="result-value" id="expectedCatchNozzle">–</div>
+    </div>
+    <div class="result">
+      <div class="result-label">Actual per nozzle</div>
+      <div class="result-value" id="actualMlNozzle">–</div>
+    </div>
+    <div class="result">
+      <div class="result-label">Actual GPA</div>
+      <div class="result-value" id="actualGpa">–</div>
+    </div>
+  </div>
+
+  <div class="result" id="calMessage" style="margin-top:1rem;">–</div>
+</div>
+
+
+    <footer>
+      <span>Always follow the product label.</span>
+      <span>All calculations run locally.</span>
+    </footer>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
