@@ -1,34 +1,46 @@
+// ------------------------------
+// CONSTANTS
+// ------------------------------
 const FT2_PER_ACRE = 43560;
 const OZ_TO_ML = 29.5735;
 const GAL_TO_ML = 3785.41;
 const QT_TO_ML = 946.353;
 
+// ------------------------------
+// GPA SYNC (main → calibration)
+// ------------------------------
 function syncGpa() {
   const gpa = read("gpa");
   document.getElementById("gpaTarget").value = gpa;
 }
 
+// ------------------------------
+// BOOM WIDTH AUTO-CALC
+// ------------------------------
 function updateBoomWidth() {
   const spacing = document.getElementById("spacingSelect").value;
   const nozzles = read("nozzlesCal");
 
   if (!nozzles || nozzles < 1) return;
-
-  if (spacing === "custom") return; // user enters manually
+  if (spacing === "custom") return;
 
   const spacingInches = parseFloat(spacing);
-  const widthFt = (spacingInches * nozzles) / 12; // FIXED
+  const widthFt = (spacingInches * nozzles) / 12;   // CORRECTED FORMULA
 
   document.getElementById("boomWidthCal").value = widthFt.toFixed(2);
 }
 
-
-
+// ------------------------------
+// BASIC READ FUNCTION
+// ------------------------------
 function read(id) {
   const v = parseFloat(document.getElementById(id).value);
   return isNaN(v) ? null : v;
 }
 
+// ------------------------------
+// UNIT CONVERSION
+// ------------------------------
 function convertToOz(value, unit) {
   switch (unit) {
     case "ml": return value / OZ_TO_ML;
@@ -51,6 +63,9 @@ function convertFromOz(oz, unit) {
   }
 }
 
+// ------------------------------
+// UNIT LABEL UPDATE
+// ------------------------------
 document.getElementById("unitSelect").addEventListener("change", () => {
   const unit = document.getElementById("unitSelect").value;
   const label = document.getElementById("rateLabel");
@@ -67,6 +82,9 @@ document.getElementById("unitSelect").addEventListener("change", () => {
   label.textContent = `Herbicide rate (${unitNames[unit]})`;
 });
 
+// ------------------------------
+// TANK BREAKDOWN
+// ------------------------------
 function renderTankBreakdown(totalGallons, tankSize, gpa, rateOz, unit, nisPct, msoPct, cocPct, uanQtAcre) {
   const container = document.getElementById("tankBreakdown");
   container.innerHTML = "";
@@ -132,6 +150,9 @@ function renderTankBreakdown(totalGallons, tankSize, gpa, rateOz, unit, nisPct, 
   }
 }
 
+// ------------------------------
+// MAIN HERBICIDE CALCULATOR
+// ------------------------------
 function calc() {
   const numPlots = read("numPlots");
   const plotLength = read("plotLength");
@@ -212,6 +233,9 @@ function calc() {
   );
 }
 
+// ------------------------------
+// CALIBRATION ENGINE
+// ------------------------------
 function calibrate() {
   const secPer100 = read("secPer100");
   const boomWidthFt = read("boomWidthCal");
@@ -225,7 +249,7 @@ function calibrate() {
     return;
   }
 
-  // Speed from seconds per 100 ft
+  // Speed
   const speedFtSec = 100 / secPer100;
   const mph = speedFtSec * 0.681818;
 
@@ -237,22 +261,22 @@ function calibrate() {
   // Width in inches
   const widthIn = boomWidthFt * 12;
 
-  // REQUIRED total GPM for target GPA
+  // Required total GPM
   const requiredGpmTotal = (gpaTarget * mph * widthIn) / 5940;
 
-  // Expected total mL in 30 seconds (all nozzles)
-  const expectedTotalMl30s = (requiredGpmTotal * 3785.41) / 2;
+  // Expected total mL in 30 sec
+  const expectedTotalMl30s = (requiredGpmTotal * GAL_TO_ML) / 2;
 
-  // Expected per nozzle mL in 30 seconds
+  // Expected per nozzle
   const expectedPerNozzleMl30s = expectedTotalMl30s / nozzles;
 
-  // Actual per nozzle mL in 30 seconds
+  // Actual per nozzle
   const actualMlNozzle30s = catchMlNozzle;
 
-  // Convert actual per-nozzle → total GPM
+  // Actual total GPM
   const actualMlTotal30s = actualMlNozzle30s * nozzles;
   const actualMlMinTotal = actualMlTotal30s * 2;
-  const actualGpmTotal = actualMlMinTotal / 3785.41;
+  const actualGpmTotal = actualMlMinTotal / GAL_TO_ML;
 
   // Actual GPA
   const actualGpa =
@@ -271,7 +295,7 @@ function calibrate() {
   document.getElementById("actualGpa").textContent =
     actualGpa.toFixed(1) + " GPA";
 
-  // Pressure adjustment helper
+  // Pressure helper
   const diff = actualGpa - gpaTarget;
   const msg = document.getElementById("calMessage");
 
@@ -288,17 +312,20 @@ function calibrate() {
   }
 }
 
-
-
-
+// ------------------------------
+// EVENT LISTENERS
+// ------------------------------
 document.getElementById("spacingSelect").addEventListener("change", updateBoomWidth);
 document.getElementById("nozzlesCal").addEventListener("input", updateBoomWidth);
-
 
 document.getElementById("calcBtn").addEventListener("click", calc);
 document.getElementById("calibrateBtn").addEventListener("click", calibrate);
 
+// ------------------------------
+// RESET BUTTON
+// ------------------------------
 document.getElementById("resetBtn").addEventListener("click", () => {
+  // Main calculator defaults
   document.getElementById("numPlots").value = 224;
   document.getElementById("plotLength").value = 16;
   document.getElementById("plotWidth").value = 5;
@@ -311,9 +338,25 @@ document.getElementById("resetBtn").addEventListener("click", () => {
   document.getElementById("cocPct").value = 2;
   document.getElementById("uanQtAcre").value = 4;
 
+  // Calibration defaults
+  document.getElementById("secPer100").value = 25;
+  document.getElementById("nozzlesCal").value = 6;
+  document.getElementById("spacingSelect").value = "20";
+  document.getElementById("catchMl").value = 300;
+
+  // Sync GPA + boom width
+  syncGpa();
+  updateBoomWidth();
+
+  // Clear results
   document.querySelectorAll(".result-value").forEach(el => el.textContent = "–");
   document.getElementById("tankBreakdown").innerHTML = "";
   document.getElementById("calMessage").textContent = "–";
 });
 
+// ------------------------------
+// INITIAL RUN
+// ------------------------------
 calc();
+syncGpa();
+updateBoomWidth();
