@@ -95,32 +95,40 @@ function renderTankBreakdown(totalGallons, tankSize, gpa, rateOz, unit, nisPct, 
 
   const acresPerFullTank = tankSize / gpa;
 
+  // FULL TANKS
   for (let i = 1; i <= fullTanks; i++) {
     const acres = acresPerFullTank;
     const herbOz = acres * rateOz;
 
     const tankMl = tankSize * GAL_TO_ML;
+
     const nisMl = tankMl * (nisPct / 100);
     const msoMl = tankMl * (msoPct / 100);
     const cocMl = tankMl * (cocPct / 100);
     const uanMl = (uanQtAcre * acres) * QT_TO_ML;
 
+    const herbMl = convertFromOz(herbOz, unit);
+
+    const waterMl = tankMl - (herbMl + nisMl + msoMl + cocMl + uanMl);
+
     const div = document.createElement("div");
     div.className = "result";
     div.innerHTML = `
       <div class="result-label">Tank ${i} (Full)</div>
-      <div class="result-value">Herbicide: ${convertFromOz(herbOz, unit).toFixed(2)} ${unit}</div>
+      <div class="result-value">Herbicide: ${herbMl.toFixed(2)} ${unit}</div>
       <div class="result-note">
         Acres: ${acres.toFixed(3)}<br>
         NIS: ${nisMl.toFixed(0)} mL<br>
         MSO: ${msoMl.toFixed(0)} mL<br>
         COC: ${cocMl.toFixed(0)} mL<br>
-        UAN: ${uanMl.toFixed(0)} mL
+        UAN: ${uanMl.toFixed(0)} mL<br>
+        <strong>Water: ${waterMl.toFixed(0)} mL</strong>
       </div>
     `;
     container.appendChild(div);
   }
 
+  // PARTIAL TANK
   if (hasPartial) {
     const gallonsFull = fullTanks * tankSize;
     const gallonsPartial = totalGallons - gallonsFull;
@@ -128,27 +136,34 @@ function renderTankBreakdown(totalGallons, tankSize, gpa, rateOz, unit, nisPct, 
     const herbOzPartial = acresPartial * rateOz;
 
     const tankMlPartial = gallonsPartial * GAL_TO_ML;
+
     const nisMl = tankMlPartial * (nisPct / 100);
     const msoMl = tankMlPartial * (msoPct / 100);
     const cocMl = tankMlPartial * (cocPct / 100);
     const uanMl = (uanQtAcre * acresPartial) * QT_TO_ML;
 
+    const herbMl = convertFromOz(herbOzPartial, unit);
+
+    const waterMl = tankMlPartial - (herbMl + nisMl + msoMl + cocMl + uanMl);
+
     const div = document.createElement("div");
     div.className = "result";
     div.innerHTML = `
       <div class="result-label">Tank ${fullTanks + 1} (Partial)</div>
-      <div class="result-value">Herbicide: ${convertFromOz(herbOzPartial, unit).toFixed(2)} ${unit}</div>
+      <div class="result-value">Herbicide: ${herbMl.toFixed(2)} ${unit}</div>
       <div class="result-note">
         Acres: ${acresPartial.toFixed(3)}<br>
         NIS: ${nisMl.toFixed(0)} mL<br>
         MSO: ${msoMl.toFixed(0)} mL<br>
         COC: ${cocMl.toFixed(0)} mL<br>
-        UAN: ${uanMl.toFixed(0)} mL
+        UAN: ${uanMl.toFixed(0)} mL<br>
+        <strong>Water: ${waterMl.toFixed(0)} mL</strong>
       </div>
     `;
     container.appendChild(div);
   }
 }
+
 
 // ------------------------------
 // MAIN HERBICIDE CALCULATOR
